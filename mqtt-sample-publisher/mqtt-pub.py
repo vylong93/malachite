@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import logging
+import argparse
 import random
 import time
+import json
 
 
 from paho.mqtt import client as mqtt_client
@@ -31,8 +33,8 @@ def publish(client, topic):
     logging.info('Start Publishing messages...')
     while True:
         time.sleep(1)
-        data = random.randint(0, 10000)
-        msg = 'm:{}'.format(data)
+        data = generate_sample_data()
+        msg = json.dumps(data)
 
         result = client.publish(topic, msg) # result: [0, 1]
         logging.info('result:{}'.format(result))
@@ -44,16 +46,32 @@ def publish(client, topic):
             logging.info('FailedToSend[{}]:toTopic:[{}]'.format(msg, topic))
 
 
-# Subcriber: mosquitto_sub -d -t testLdangTopic
-logging.info('MQTT Python Sample Publisher')
+def generate_sample_data():
+    temp = round(random.uniform(22.5, 37.5), 2)
+    pressure = round(random.uniform(700.5, 999.5), 2)
+    humidity = round(random.uniform(40.5, 79.5), 2)
+    gas = round(random.uniform(200.5, 255.5), 2)
+    return {"t":temp, "p":pressure, "h":humidity, "g":gas}
 
-broker = 'localhost'
-port = 1883
-topic = 'testLdangTopic'
-client_id = f'python-mqtt-{random.randint(0, 1000)}'
-username = None
-password = None
 
-client = connect_mqtt(client_id, broker, port)
-client.loop_start()
-publish(client, topic)
+# Subcriber: mosquitto_sub -d -t testTopic
+def main():
+    parser = argparse.ArgumentParser(description='MQTT Python Sample Publisher')
+    parser.add_argument('-b', '--broker', action='store', required=False, help='Broker to publish')
+    parser.add_argument('-p', '--port', action='store', required=False, help='Port to publish')
+    parser.add_argument('-t', '--topic', action='store', required=False, help='Topic to publish')
+
+    args = parser.parse_args()
+
+    broker = args.broker if args.broker else 'localhost'
+    port = args.port if args.port else 1883
+    topic = args.topic if args.topic else 'testTopic'
+
+    client_id = f'python-mqtt-{random.randint(0, 1000)}'
+    client = connect_mqtt(client_id, broker, port)
+    client.loop_start()
+    publish(client, topic)
+
+
+if __name__ == "__main__":
+    main()
