@@ -29,10 +29,10 @@ def connect_mqtt(client_id, broker, port):
     return client
 
 
-def publish(client, topic):
+def publish(client, topic, duration=1):
     logging.info('Start Publishing messages...')
     while True:
-        time.sleep(1)
+        time.sleep(duration)
         data = generate_sample_data()
         msg = json.dumps(data)
 
@@ -60,17 +60,19 @@ def main():
     parser.add_argument('-b', '--broker', action='store', required=False, help='Broker to publish')
     parser.add_argument('-p', '--port', action='store', required=False, help='Port to publish')
     parser.add_argument('-t', '--topic', action='store', required=False, help='Topic to publish')
+    parser.add_argument('-d', '--duration', action='store', required=False, help='Publish duration in seconds')
 
     args = parser.parse_args()
 
     broker = args.broker if args.broker else 'localhost'
-    port = args.port if args.port else 1883
+    port = int(args.port) if args.port else 1883
     topic = args.topic if args.topic else 'testTopic'
+    duration = int(args.duration) if args.duration else 5
 
     client_id = f'python-mqtt-{random.randint(0, 1000)}'
     client = connect_mqtt(client_id, broker, port)
     client.loop_start()
-    publish(client, topic)
+    publish(client, topic, duration)
 
 
 if __name__ == "__main__":
